@@ -2,4 +2,4 @@
 build_from:
   amd64: ghcr.io/home-assistant/amd64-base-debian:bookworm
 args:
-  WYOMING_LEMONADE_VERSION: 0.1.0
+  LEMONADE_HA_VERSION: 0.1.0

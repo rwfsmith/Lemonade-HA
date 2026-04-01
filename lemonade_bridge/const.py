@@ -1,4 +1,4 @@
-"""Constants and defaults for wyoming-lemonade."""
+"""Constants and defaults for lemonade-ha."""
 
 from __future__ import annotations
 

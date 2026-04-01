@@ -1,4 +1,4 @@
-"""Config flow for Lemonade Wyoming."""
+"""Config flow for Lemonade HA."""
 
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ _MODEL_SCHEMA = vol.Schema(
 
 
 class LemonadeConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Lemonade Wyoming."""
+    """Handle a config flow for Lemonade HA."""
 
     VERSION = 1
 
@@ -111,7 +111,7 @@ class LemonadeConfigFlow(ConfigFlow, domain=DOMAIN):
             }
             await self.async_set_unique_id(f"{self._host}:{self._port}")
             self._abort_if_unique_id_configured()
-            return self.async_create_entry(title="Lemonade Wyoming", data=data)
+            return self.async_create_entry(title="Lemonade HA", data=data)
 
         return self.async_show_form(
             step_id="models",

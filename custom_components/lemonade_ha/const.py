@@ -1,6 +1,6 @@
-"""Lemonade Wyoming — constants."""
+"""Lemonade HA — constants."""
 
-DOMAIN = "lemonade_wyoming"
+DOMAIN = "lemonade_ha"
 
 # Config entry keys
 CONF_HOST = "host"

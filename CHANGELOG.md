@@ -7,7 +7,7 @@
   Wyoming Protocol integration entries needed
 - Add-on automatically copies the custom component to the HA config directory
   on startup; restart HA once to load it, then configure via
-  Settings → Devices & Services → Add Integration → Lemonade Wyoming
+  Settings → Devices & Services → Add Integration → Lemonade HA
 
 ## 0.3.2
 

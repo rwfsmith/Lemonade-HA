@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Lemonade Wyoming — Connection",
+        "title": "Lemonade HA — Connection",
         "description": "Enter the address where Lemonade is running. Default is localhost:8000.",
         "data": {
           "host": "Host",
@@ -10,8 +10,8 @@
         }
       },
       "models": {
-        "title": "Lemonade Wyoming — Models",
-        "description": "Choose which models to use. These must already be downloaded via the Lemonade Wyoming add-on.",
+        "title": "Lemonade HA — Models",
+        "description": "Choose which models to use. These must already be downloaded via the Lemonade HA add-on.",
         "data": {
           "stt_model": "Whisper STT model",
           "stt_language": "STT language",
@@ -27,13 +27,13 @@
       "cannot_connect": "Cannot connect to Lemonade at the given host and port. Make sure Lemonade is running."
     },
     "abort": {
-      "already_configured": "Lemonade Wyoming is already configured for this host."
+      "already_configured": "Lemonade HA is already configured for this host."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Lemonade Wyoming — Options",
+        "title": "Lemonade HA — Options",
         "data": {
           "stt_model": "Whisper STT model",
           "stt_language": "STT language",

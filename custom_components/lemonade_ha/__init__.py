@@ -1,4 +1,4 @@
-"""Lemonade Wyoming integration — setup and teardown."""
+"""Lemonade HA integration — setup and teardown."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Lemonade Wyoming from a config entry."""
+    """Set up Lemonade HA from a config entry."""
     client = LemonadeClient(
         host=entry.data[CONF_HOST],
         port=entry.data[CONF_PORT],

@@ -1,4 +1,4 @@
-"""Entry-point for ``python -m wyoming_lemonade``.
+"""Entry-point for ``python -m lemonade_bridge``.
 
 Parses CLI arguments (or reads them from environment / HA add-on options),
 ensures Lemonade is running, pulls & loads models, and starts the three
@@ -27,13 +27,13 @@ from .lemonade_client import LemonadeClient
 from .models import ModelSpec, ensure_all_models_ready
 from .server import run_servers
 
-_LOGGER = logging.getLogger("wyoming_lemonade")
+_LOGGER = logging.getLogger("lemonade_bridge")
 
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="wyoming_lemonade",
-        description="Wyoming protocol server backed by the Lemonade local-AI platform.",
+        prog="lemonade_bridge",
+        description="Lemonade local-AI bridge server (STT / LLM / TTS).",
     )
 
     # ── STT ──────────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ async def _async_main(args: argparse.Namespace) -> None:
 
         # 3. Unblock all waiting handlers
         ready_event.set()
-        _LOGGER.info("Lemonade-Wyoming is ready to handle voice requests.")
+        _LOGGER.info("Lemonade HA is ready to handle voice requests.")
 
     # Kick off setup in the background — Wyoming servers open their ports first
     # so HA Supervisor considers the add-on started within its timeout window.

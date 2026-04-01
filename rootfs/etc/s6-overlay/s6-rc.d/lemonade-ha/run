@@ -1,7 +1,7 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Start the Lemonade-Wyoming bridge server
+# Start the Lemonade HA bridge
 # ==============================================================================
 
 # ── Install custom component into HA config directory ────────────────────────
@@ -12,8 +12,8 @@ else
     HA_CONFIG="/config"
 fi
 
-COMPONENT_SRC="/usr/src/custom_components/lemonade_wyoming"
-COMPONENT_DEST="${HA_CONFIG}/custom_components/lemonade_wyoming"
+COMPONENT_SRC="/usr/src/custom_components/lemonade_ha"
+COMPONENT_DEST="${HA_CONFIG}/custom_components/lemonade_ha"
 
 mkdir -p "${HA_CONFIG}/custom_components"
 
@@ -123,10 +123,10 @@ flags+=(--zeroconf)
 
 # ── Launch ───────────────────────────────────────────────────────────────────
 
-bashio::log.info "Starting Lemonade-Wyoming bridge …"
+bashio::log.info "Starting Lemonade HA bridge …"
 bashio::log.info "  STT model:  ${stt_model} (${stt_backend})"
 bashio::log.info "  LLM model:  ${llm_model} (backend=${llm_backend_flag})"
 bashio::log.info "  TTS model:  ${tts_model}  voice=${tts_voice}"
 bashio::log.info "  Lemonade:   http://${lemonade_host}:${lemonade_port}"
 
-exec python3 -m wyoming_lemonade "${flags[@]}"
+exec python3 -m lemonade_bridge "${flags[@]}"

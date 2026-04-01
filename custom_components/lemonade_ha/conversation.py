@@ -1,4 +1,4 @@
-"""Lemonade Wyoming — Conversation agent entity."""
+"""Lemonade HA — Conversation agent entity."""
 
 from __future__ import annotations
 

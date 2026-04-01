@@ -1,4 +1,4 @@
-"""Lemonade Wyoming — Speech-to-Text entity."""
+"""Lemonade HA — Speech-to-Text entity."""
 
 from __future__ import annotations
 

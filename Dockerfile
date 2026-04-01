@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 WORKDIR /usr/src
-ARG WYOMING_LEMONADE_VERSION
+ARG LEMONADE_HA_VERSION
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 # Install system deps
@@ -21,8 +21,8 @@ RUN \
         wheel \
     && rm -rf /var/lib/apt/lists/*
 
-# Install the Wyoming-Lemonade bridge
-COPY wyoming_lemonade/ /usr/src/wyoming_lemonade/
+# Install the Lemonade bridge
+COPY lemonade_bridge/ /usr/src/lemonade_bridge/
 COPY pyproject.toml /usr/src/
 COPY requirements.txt /usr/src/
 COPY custom_components/ /usr/src/custom_components/

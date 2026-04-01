@@ -1,10 +1,10 @@
 ---
 version: 0.3.3
-slug: lemonade-wyoming
-name: Lemonade Wyoming
+slug: lemonade-ha
+name: Lemonade HA
 description: >-
   Local Voice Assist powered by Lemonade — Whisper STT, LLM conversation,
-  and Kokoro TTS via the Wyoming protocol.
+  and Kokoro TTS, with a native Home Assistant integration.
 url: https://github.com/rwfsmith/Lemonade-HA
 arch:
   - amd64

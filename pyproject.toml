@@ -3,10 +3,10 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "wyoming-lemonade"
+name = "lemonade-ha"
 version = "0.3.3"
-description = "Wyoming protocol server backed by the Lemonade local-AI platform"
-readme = "DOCS.md"
+description = "Home Assistant integration for Lemonade local AI — STT, TTS, and conversation"
+readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
 authors = [
@@ -21,7 +21,7 @@ dependencies = [
 zeroconf = ["wyoming[zeroconf]"]
 
 [project.scripts]
-wyoming-lemonade = "wyoming_lemonade.__main__:run"
+lemonade-ha = "lemonade_bridge.__main__:run"
 
 [tool.setuptools.packages.find]
-include = ["wyoming_lemonade*"]
+include = ["lemonade_bridge*"]
