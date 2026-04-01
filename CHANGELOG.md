@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4
+
+- Remove HEALTHCHECK — Docker now marks container healthy immediately,
+  stopping the HA watchdog restart loop
+- Add build-time import verification to catch Python errors during `docker build`
+
 ## 0.3.3
 
 - Add native HA custom integration (`custom_components/lemonade_wyoming`)

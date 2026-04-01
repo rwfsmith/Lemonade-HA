@@ -1,7 +1,7 @@
 {
   "domain": "lemonade_ha",
   "name": "Lemonade HA",
-  "version": "0.1.0",
+  "version": "0.3.4",
   "documentation": "https://github.com/rwfsmith/Lemonade-HA",
   "issue_tracker": "https://github.com/rwfsmith/Lemonade-HA/issues",
   "codeowners": ["@rwfsmith"],
