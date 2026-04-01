@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- Restructure LLM configuration by backend (llamacpp / ryzenai / flm)
+- Full model list from server_models.json (~110 models across all backends)
+- Per-backend model dropdowns in HA configuration UI
+
 ## 0.1.0
 
 - Initial release
