@@ -127,6 +127,7 @@ async def run_servers(
     tts_model: str,
     tts_voice: str,
     zeroconf: bool = True,
+    ready_event: "asyncio.Event | None" = None,
 ) -> None:
     """Create and run the three Wyoming TCP servers concurrently."""
     # Build Info objects
@@ -143,6 +144,12 @@ async def run_servers(
     _LOGGER.info("Starting Wyoming LLM  on %s", llm_uri)
     _LOGGER.info("Starting Wyoming TTS  on %s", tts_uri)
 
+    # Use a real Event; create a pre-set one if caller didn't supply one
+    # (pre-set means handlers won't block when run outside HA add-on context)
+    if ready_event is None:
+        ready_event = asyncio.Event()
+        ready_event.set()
+
     # Handler factories (partial application)
     stt_factory = partial(
         LemonadeSttHandler,
@@ -151,6 +158,7 @@ async def run_servers(
         stt_model,
         stt_language,
         stt_beam_size,
+        ready_event,
     )
     llm_factory = partial(
         LemonadeLlmHandler,
@@ -159,6 +167,7 @@ async def run_servers(
         llm_model,
         llm_system_prompt,
         llm_max_tokens,
+        ready_event,
     )
     tts_factory = partial(
         LemonadeTtsHandler,
@@ -166,6 +175,7 @@ async def run_servers(
         lemonade_client,
         tts_model,
         tts_voice,
+        ready_event,
     )
 
     # Run all three concurrently

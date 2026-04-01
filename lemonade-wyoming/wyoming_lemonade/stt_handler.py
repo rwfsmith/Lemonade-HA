@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
 import wave
@@ -30,6 +31,9 @@ class LemonadeSttHandler(AsyncEventHandler):
         AudioStop  → transcribe via Lemonade → Transcript  (then disconnect)
     """
 
+    # How long to wait for Lemonade setup before giving up on a request
+    _READY_TIMEOUT = 600.0
+
     def __init__(
         self,
         wyoming_info: Info,
@@ -37,6 +41,7 @@ class LemonadeSttHandler(AsyncEventHandler):
         stt_model: str,
         stt_language: str,
         stt_beam_size: int,
+        ready_event: asyncio.Event,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -46,6 +51,7 @@ class LemonadeSttHandler(AsyncEventHandler):
         self._model = stt_model
         self._language = stt_language
         self._beam_size = stt_beam_size
+        self._ready_event = ready_event
 
         # Per-request state
         self._audio_buf = b""
@@ -86,6 +92,17 @@ class LemonadeSttHandler(AsyncEventHandler):
             return True
 
         if AudioStop.is_type(event.type):
+            if not self._ready_event.is_set():
+                _LOGGER.info("Waiting for Lemonade setup to complete before transcribing …")
+                try:
+                    await asyncio.wait_for(
+                        self._ready_event.wait(), timeout=self._READY_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    _LOGGER.error("Timed out waiting for Lemonade — dropping STT request")
+                    await self.write_event(Transcript(text="").event())
+                    return False
+
             _LOGGER.debug(
                 "AudioStop — total bytes=%d  (%.1f s)",
                 len(self._audio_buf),

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Fix startup timeout: Wyoming TCP ports now open immediately; Lemonade
+  connection and model downloads happen in the background
+- Handlers queue voice requests until Lemonade is ready (up to 10 minutes)
+  instead of failing with a timeout error
+
 ## 0.2.0
 
 - Restructure LLM configuration by backend (llamacpp / ryzenai / flm)

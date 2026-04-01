@@ -12,7 +12,6 @@ import asyncio
 import logging
 import shutil
 import subprocess
-import sys
 import time
 
 from .const import (
@@ -124,41 +123,11 @@ def _try_start_lemonade() -> bool:
 async def _async_main(args: argparse.Namespace) -> None:
     client = LemonadeClient(host=args.lemonade_host, port=args.lemonade_port)
 
-    # 1. Ensure Lemonade is reachable
-    healthy = await client.health_check()
-    if not healthy and args.auto_start_lemonade:
-        _LOGGER.info("Lemonade not reachable — attempting to start …")
-        launched = _try_start_lemonade()
-        if launched:
-            healthy = await _wait_for_lemonade(
-                client, LEMONADE_STARTUP_TIMEOUT
-            )
-    if not healthy:
-        # One last attempt — maybe the user just needs a moment
-        _LOGGER.warning(
-            "Lemonade not responding at http://%s:%d — "
-            "will retry for %d s before giving up.",
-            args.lemonade_host,
-            args.lemonade_port,
-            LEMONADE_STARTUP_TIMEOUT,
-        )
-        healthy = await _wait_for_lemonade(
-            client, LEMONADE_STARTUP_TIMEOUT
-        )
-    if not healthy:
-        _LOGGER.error(
-            "Cannot reach Lemonade at http://%s:%d.  Exiting.",
-            args.lemonade_host,
-            args.lemonade_port,
-        )
-        sys.exit(1)
-    _LOGGER.info(
-        "Lemonade is healthy at http://%s:%d",
-        args.lemonade_host,
-        args.lemonade_port,
-    )
+    # Signals handlers that Lemonade is up and models are loaded.
+    # Set in the background setup task; handlers await it before processing.
+    ready_event = asyncio.Event()
 
-    # 2. Download & load models
+    # Build model specs up front so the background task can capture them.
     stt_spec = ModelSpec(
         name=args.stt_model,
         backend=args.stt_backend,
@@ -179,9 +148,58 @@ async def _async_main(args: argparse.Namespace) -> None:
         extra_load_kwargs={},
     )
 
-    await ensure_all_models_ready(client, stt_spec, llm_spec, tts_spec)
+    async def _setup() -> None:
+        """Wait for Lemonade and ensure models are ready, then unblock handlers."""
+        # 1. Ensure Lemonade is reachable
+        healthy = await client.health_check()
+        if not healthy and args.auto_start_lemonade:
+            _LOGGER.info("Lemonade not reachable — attempting to start …")
+            launched = _try_start_lemonade()
+            if launched:
+                healthy = await _wait_for_lemonade(
+                    client, LEMONADE_STARTUP_TIMEOUT
+                )
+        if not healthy:
+            _LOGGER.warning(
+                "Lemonade not responding at http://%s:%d — "
+                "will retry for %d s before giving up.",
+                args.lemonade_host,
+                args.lemonade_port,
+                LEMONADE_STARTUP_TIMEOUT,
+            )
+            healthy = await _wait_for_lemonade(
+                client, LEMONADE_STARTUP_TIMEOUT
+            )
+        if not healthy:
+            _LOGGER.error(
+                "Cannot reach Lemonade at http://%s:%d.  "
+                "Voice requests will fail until Lemonade is available.",
+                args.lemonade_host,
+                args.lemonade_port,
+            )
+            # Do not exit — keep servers alive so HA doesn't restart the add-on.
+            # When Lemonade eventually becomes available the handlers will log
+            # an error and HA can retry.
+            return
 
-    # 3. Start Wyoming servers
+        _LOGGER.info(
+            "Lemonade is healthy at http://%s:%d",
+            args.lemonade_host,
+            args.lemonade_port,
+        )
+
+        # 2. Download & load models
+        await ensure_all_models_ready(client, stt_spec, llm_spec, tts_spec)
+
+        # 3. Unblock all waiting handlers
+        ready_event.set()
+        _LOGGER.info("Lemonade-Wyoming is ready to handle voice requests.")
+
+    # Kick off setup in the background — Wyoming servers open their ports first
+    # so HA Supervisor considers the add-on started within its timeout window.
+    asyncio.create_task(_setup())
+
+    # 3. Start Wyoming servers (opens TCP ports immediately)
     await run_servers(
         lemonade_client=client,
         stt_uri=args.stt_uri,
@@ -196,6 +214,7 @@ async def _async_main(args: argparse.Namespace) -> None:
         tts_model=args.tts_model,
         tts_voice=args.tts_voice,
         zeroconf=args.zeroconf,
+        ready_event=ready_event,
     )
 
 

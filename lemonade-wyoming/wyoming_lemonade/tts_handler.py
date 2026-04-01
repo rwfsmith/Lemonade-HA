@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -25,12 +26,15 @@ class LemonadeTtsHandler(AsyncEventHandler):
         Synthesize →  AudioStart + AudioChunk(s) + AudioStop
     """
 
+    _READY_TIMEOUT = 600.0
+
     def __init__(
         self,
         wyoming_info: Info,
         client: LemonadeClient,
         tts_model: str,
         tts_voice: str,
+        ready_event: asyncio.Event,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -39,6 +43,7 @@ class LemonadeTtsHandler(AsyncEventHandler):
         self._client = client
         self._model = tts_model
         self._voice = tts_voice
+        self._ready_event = ready_event
 
     async def handle_event(self, event: Event) -> bool:  # noqa: D401
         if Describe.is_type(event.type):
@@ -54,6 +59,24 @@ class LemonadeTtsHandler(AsyncEventHandler):
                 voice = synthesize.voice.name
 
             _LOGGER.info("Synthesize: voice=%s text=%r", voice, text[:80])
+
+            if not self._ready_event.is_set():
+                _LOGGER.info("Waiting for Lemonade setup to complete before synthesizing …")
+                try:
+                    await asyncio.wait_for(
+                        self._ready_event.wait(), timeout=self._READY_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    _LOGGER.error("Timed out waiting for Lemonade — dropping TTS request")
+                    await self.write_event(
+                        AudioStart(
+                            rate=KOKORO_SAMPLE_RATE,
+                            width=KOKORO_SAMPLE_WIDTH,
+                            channels=KOKORO_CHANNELS,
+                        ).event()
+                    )
+                    await self.write_event(AudioStop().event())
+                    return False
 
             try:
                 await self._do_synthesize(text, voice)

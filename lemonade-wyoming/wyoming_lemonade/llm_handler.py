@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -29,6 +30,8 @@ class LemonadeLlmHandler(AsyncEventHandler):
         Transcript →  Handled (LLM response text)
     """
 
+    _READY_TIMEOUT = 600.0
+
     def __init__(
         self,
         wyoming_info: Info,
@@ -36,6 +39,7 @@ class LemonadeLlmHandler(AsyncEventHandler):
         llm_model: str,
         system_prompt: str,
         max_tokens: int,
+        ready_event: asyncio.Event,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -45,6 +49,7 @@ class LemonadeLlmHandler(AsyncEventHandler):
         self._model = llm_model
         self._system_prompt = system_prompt or _DEFAULT_SYSTEM_PROMPT
         self._max_tokens = max_tokens
+        self._ready_event = ready_event
 
         # Simple per-connection message history (no cross-connection memory)
         self._messages: list[dict[str, str]] = [
@@ -58,6 +63,19 @@ class LemonadeLlmHandler(AsyncEventHandler):
             return True
 
         if Transcript.is_type(event.type):
+            if not self._ready_event.is_set():
+                _LOGGER.info("Waiting for Lemonade setup to complete before running LLM …")
+                try:
+                    await asyncio.wait_for(
+                        self._ready_event.wait(), timeout=self._READY_TIMEOUT
+                    )
+                except asyncio.TimeoutError:
+                    _LOGGER.error("Timed out waiting for Lemonade — dropping LLM request")
+                    await self.write_event(
+                        NotHandled(text="Lemonade is not yet ready.").event()
+                    )
+                    return False
+
             transcript = Transcript.from_event(event)
             user_text = transcript.text
             if not user_text or not user_text.strip():
