@@ -25,22 +25,38 @@ configuration:
     description: >-
       Number of candidates to consider during transcription (0 = auto).
 
-  llm_model:
-    name: LLM Model
-    description: >-
-      Large language model for the conversation agent.  Select 'custom' and
-      fill in 'LLM Custom Model' for unlisted models.
-  llm_custom_model:
-    name: LLM Custom Model
-    description: >-
-      Name of a custom LLM in the Lemonade registry
-      (only used when LLM Model is set to 'custom').
   llm_backend:
     name: LLM Backend
     description: >-
-      Inference backend for the LLM.  'auto' will pick the best available.
-      llama.cpp supports Vulkan/ROCm/CPU/Metal; FastFlowLM and RyzenAI
-      target AMD NPUs.
+      Inference engine for the LLM.  'llamacpp' runs GGUF models via llama.cpp
+      (Vulkan/ROCm/CPU/Metal); 'ryzenai' uses AMD RyzenAI NPU/Hybrid ONNX
+      models; 'flm' uses FastFlowLM NPU models.
+  llm_llamacpp_backend:
+    name: llama.cpp Device
+    description: >-
+      GPU/CPU backend for llama.cpp.  'auto' picks the best device available
+      (Vulkan → ROCm → CPU).  Only used when LLM Backend is 'llamacpp'.
+  llm_model_llamacpp:
+    name: LLM Model (llama.cpp)
+    description: >-
+      GGUF model to use when LLM Backend is 'llamacpp'.
+      Select 'custom' and set LLM Custom Model for unlisted models.
+  llm_model_ryzenai:
+    name: LLM Model (RyzenAI)
+    description: >-
+      RyzenAI ONNX model to use when LLM Backend is 'ryzenai'.
+      Hybrid models use both NPU and GPU; NPU models run entirely on the NPU;
+      CPU models are a software fallback.  Select 'custom' for unlisted models.
+  llm_model_flm:
+    name: LLM Model (FastFlowLM)
+    description: >-
+      FastFlowLM NPU model to use when LLM Backend is 'flm'.
+      Select 'custom' and set LLM Custom Model for unlisted models.
+  llm_custom_model:
+    name: LLM Custom Model
+    description: >-
+      Name of any Lemonade model not in the dropdown lists above.
+      Only used when the selected model field is set to 'custom'.
   llm_context_size:
     name: LLM Context Size
     description: >-

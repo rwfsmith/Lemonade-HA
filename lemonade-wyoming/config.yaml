@@ -24,8 +24,11 @@ options:
   stt_beam_size: 0
 
   # --- LLM / Conversation ---
-  llm_model: Qwen3-4B-GGUF
-  llm_backend: auto
+  llm_backend: llamacpp
+  llm_llamacpp_backend: auto
+  llm_model_llamacpp: Qwen3-4B-GGUF
+  llm_model_ryzenai: Qwen3-4B-Hybrid
+  llm_model_flm: qwen3-4b-FLM
   llm_context_size: 4096
   llm_max_tokens: 256
   llm_system_prompt: >-
@@ -54,11 +57,15 @@ schema:
     list(auto|af|am|ar|as|az|ba|be|bg|bn|bo|br|bs|ca|cs|cy|da|de|el|en|es|et|eu|fa|fi|fo|fr|gl|gu|ha|haw|he|hi|hr|ht|hu|hy|id|is|it|ja|jw|ka|kk|km|kn|ko|la|lb|ln|lo|lt|lv|mg|mi|mk|ml|mn|mr|ms|mt|my|ne|nl|nn|no|oc|pa|pl|ps|pt|ro|ru|sa|sd|si|sk|sl|sn|so|sq|sr|su|sv|sw|ta|te|tg|th|tk|tl|tr|tt|uk|ur|uz|vi|yi|yo|yue|zh)
   stt_beam_size: int
 
-  llm_model: >-
-    list(Qwen3-4B-GGUF|Qwen3-1.7B-GGUF|Qwen3-0.6B-GGUF|Llama-3.2-1B-Instruct-GGUF|Llama-3.2-3B-Instruct-GGUF|Phi-4-mini-instruct-GGUF|Mistral-7B-Instruct-v0.3-GGUF|custom)
+  llm_backend: list(llamacpp|ryzenai|flm)
+  llm_llamacpp_backend: list(auto|vulkan|rocm|cpu|metal)
+  llm_model_llamacpp: >-
+    list(Cogito-v2-llama-109B-MoE-GGUF|DeepSeek-Qwen3-8B-GGUF|Devstral-Small-2507-GGUF|GLM-4.5-Air-UD-Q4K-XL-GGUF|GLM-4.7-Flash-GGUF|Gemma-3-4b-it-GGUF|Jan-nano-128k-GGUF|Jan-v1-4B-GGUF|LFM2-1.2B-GGUF|LFM2-24B-A2B-GGUF|LFM2-8B-A1B-GGUF|LFM2.5-1.2B-Instruct-GGUF|Llama-3.2-1B-Instruct-GGUF|Llama-3.2-3B-Instruct-GGUF|Llama-4-Scout-17B-16E-Instruct-GGUF|Ministral-3-3B-Instruct-2512-GGUF|Nemotron-3-Nano-30B-A3B-GGUF|Phi-4-mini-instruct-GGUF|Playable1-GGUF|PromptBridge-0.6b-Alpha-GGUF|Qwen2.5-Coder-32B-Instruct-GGUF|Qwen2.5-VL-3B-Instruct-GGUF|Qwen2.5-VL-7B-Instruct-GGUF|Qwen3-0.6B-GGUF|Qwen3-1.7B-GGUF|Qwen3-4B-GGUF|Qwen3-4B-Instruct-2507-GGUF|Qwen3-8B-GGUF|Qwen3-14B-GGUF|Qwen3-30B-A3B-GGUF|Qwen3-30B-A3B-Instruct-2507-GGUF|Qwen3-Coder-30B-A3B-Instruct-GGUF|Qwen3-Coder-Next-GGUF|Qwen3-Next-80B-A3B-Instruct-GGUF|Qwen3-VL-4B-Instruct-GGUF|Qwen3-VL-8B-Instruct-GGUF|Qwen3.5-0.8B-GGUF|Qwen3.5-2B-GGUF|Qwen3.5-4B-GGUF|Qwen3.5-9B-GGUF|Qwen3.5-27B-GGUF|Qwen3.5-35B-A3B-GGUF|Qwen3.5-122B-A10B-GGUF|SmolLM3-3B-GGUF|gpt-oss-20b-GGUF|gpt-oss-20b-mxfp4-GGUF|gpt-oss-120b-GGUF|gpt-oss-120b-mxfp-GGUF|granite-4.0-h-tiny-GGUF|custom)
+  llm_model_ryzenai: >-
+    list(AMD-OLMo-1B-SFT-DPO-Hybrid|CodeLlama-7b-Instruct-hf-Hybrid|CodeLlama-7b-Instruct-hf-NPU|DeepSeek-R1-Distill-Llama-8B-CPU|DeepSeek-R1-Distill-Llama-8B-Hybrid|DeepSeek-R1-Distill-Llama-8B-NPU|DeepSeek-R1-Distill-Qwen-1.5B-Hybrid|DeepSeek-R1-Distill-Qwen-1.5B-NPU|DeepSeek-R1-Distill-Qwen-7B-CPU|DeepSeek-R1-Distill-Qwen-7B-Hybrid|DeepSeek-R1-Distill-Qwen-7B-NPU|Gemma-3-4b-it-mm-NPU|Llama-2-7b-chat-hf-Hybrid|Llama-2-7b-chat-hf-NPU|Llama-2-7b-hf-Hybrid|Llama-2-7b-hf-NPU|Llama-3.1-8B-Hybrid|Llama-3.1-8B-NPU|Llama-3.2-1B-Hybrid|Llama-3.2-1B-Instruct-CPU|Llama-3.2-1B-Instruct-Hybrid|Llama-3.2-1B-Instruct-NPU|Llama-3.2-1B-NPU|Llama-3.2-3B-Hybrid|Llama-3.2-3B-Instruct-CPU|Llama-3.2-3B-Instruct-Hybrid|Meta-Llama-3-8B-Hybrid|Meta-Llama-3-8B-NPU|Meta-Llama-3.1-8B-Instruct-Hybrid|Meta-Llama-3.1-8B-Instruct-NPU|Mistral-7B-Instruct-v0.1-Hybrid|Mistral-7B-Instruct-v0.1-NPU|Mistral-7B-Instruct-v0.2-Hybrid|Mistral-7B-Instruct-v0.2-NPU|Mistral-7B-Instruct-v0.3-Hybrid|Mistral-7B-Instruct-v0.3-NPU|Mistral-7B-v0.3-Hybrid|Mistral-7B-v0.3-NPU|Phi-3-Mini-Instruct-CPU|Phi-3-mini-128k-instruct-Hybrid|Phi-3-mini-128k-instruct-NPU|Phi-3-mini-4k-instruct-Hybrid|Phi-3-mini-4k-instruct-NPU|Phi-3.5-mini-instruct-Hybrid|Phi-3.5-mini-instruct-NPU|Phi-4-mini-instruct-Hybrid|Phi-4-mini-instruct-NPU|Phi-4-mini-reasoning-Hybrid|Qwen-1.5-7B-Chat-CPU|Qwen-2.5-1.5B-Instruct-Hybrid|Qwen-2.5-1.5B-Instruct-NPU|Qwen1.5-7B-Chat-Hybrid|Qwen1.5-7B-Chat-NPU|Qwen2-1.5B-Hybrid|Qwen2-1.5B-NPU|Qwen2-7B-Hybrid|Qwen2-7B-NPU|Qwen2.5-0.5B-Instruct-CPU|Qwen2.5-0.5B-Instruct-Hybrid|Qwen2.5-3B-Instruct-Hybrid|Qwen2.5-3B-Instruct-NPU|Qwen2.5-7B-Instruct-Hybrid|Qwen2.5-7B-Instruct-NPU|Qwen2.5-14B-instruct-Hybrid|Qwen2.5-Coder-0.5B-Instruct-Hybrid|Qwen2.5-Coder-1.5B-Instruct-Hybrid|Qwen2.5-Coder-1.5B-Instruct-NPU|Qwen2.5-Coder-7B-Instruct-Hybrid|Qwen2.5-Coder-7B-Instruct-NPU|Qwen3-1.7B-Hybrid|Qwen3-4B-Hybrid|Qwen3-8B-Hybrid|Qwen3-14B-Hybrid|SmolLM-135M-Instruct-Hybrid|SmolLM2-135M-Instruct-Hybrid|chatglm3-6b-Hybrid|chatglm3-6b-NPU|gemma-2-2b-Hybrid|gpt-oss-20b-NPU|custom)
+  llm_model_flm: >-
+    list(deepseek-r1-0528-8b-FLM|deepseek-r1-8b-FLM|gemma3-1b-FLM|gemma3-4b-FLM|gpt-oss-20b-FLM|gpt-oss-sg-20b-FLM|lfm2-1.2b-FLM|lfm2-2.6b-FLM|lfm2-trans-2.6b-FLM|lfm2.5-it-1.2b-FLM|lfm2.5-tk-1.2b-FLM|llama3.1-8b-FLM|llama3.2-1b-FLM|llama3.2-3b-FLM|medgemma-4b-FLM|medgemma1.5-4b-FLM|phi4-mini-it-4b-FLM|qwen2.5-it-3b-FLM|qwen2.5vl-it-3b-FLM|qwen3-0.6b-FLM|qwen3-1.7b-FLM|qwen3-4b-FLM|qwen3-8b-FLM|qwen3-it-4b-FLM|qwen3-tk-4b-FLM|qwen3.5-4b-FLM|qwen3vl-it-4b-FLM|translategemma-4b-FLM|custom)
   llm_custom_model: str?
-  llm_backend: >-
-    list(auto|llamacpp:vulkan|llamacpp:rocm|llamacpp:cpu|llamacpp:metal|flm:npu|ryzenai:npu)
   llm_context_size: int
   llm_max_tokens: int
   llm_system_prompt: str

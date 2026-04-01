@@ -13,11 +13,29 @@ stt_backend="$(bashio::config 'stt_backend')"
 stt_language="$(bashio::config 'stt_language')"
 stt_beam_size="$(bashio::config 'stt_beam_size')"
 
-llm_model="$(bashio::config 'llm_model')"
 llm_backend="$(bashio::config 'llm_backend')"
 llm_context_size="$(bashio::config 'llm_context_size')"
 llm_max_tokens="$(bashio::config 'llm_max_tokens')"
 llm_system_prompt="$(bashio::config 'llm_system_prompt')"
+
+# Resolve model name and backend flag from the per-backend dropdowns
+if [ "${llm_backend}" = "llamacpp" ]; then
+    llm_model="$(bashio::config 'llm_model_llamacpp')"
+    llm_sub="$(bashio::config 'llm_llamacpp_backend')"
+    if [ "${llm_sub}" != "auto" ]; then
+        llm_backend_flag="llamacpp:${llm_sub}"
+    else
+        llm_backend_flag="auto"
+    fi
+elif [ "${llm_backend}" = "ryzenai" ]; then
+    llm_model="$(bashio::config 'llm_model_ryzenai')"
+    llm_backend_flag="ryzenai:npu"
+elif [ "${llm_backend}" = "flm" ]; then
+    llm_model="$(bashio::config 'llm_model_flm')"
+    llm_backend_flag="flm:npu"
+else
+    bashio::exit.nok "Unknown LLM backend: ${llm_backend}"
+fi
 
 tts_model="$(bashio::config 'tts_model')"
 tts_voice="$(bashio::config 'tts_voice')"
@@ -38,7 +56,7 @@ fi
 if [ "${llm_model}" = "custom" ]; then
     llm_model="$(bashio::config 'llm_custom_model')"
     if [ -z "${llm_model}" ]; then
-        bashio::exit.nok "LLM Custom Model is not set"
+        bashio::exit.nok "LLM Custom Model is not set (llm_backend=${llm_backend})"
     fi
 fi
 
@@ -58,7 +76,7 @@ flags+=(--stt-beam-size "${stt_beam_size}")
 flags+=(--stt-uri "tcp://0.0.0.0:10500")
 
 flags+=(--llm-model "${llm_model}")
-flags+=(--llm-backend "${llm_backend}")
+flags+=(--llm-backend "${llm_backend_flag}")
 flags+=(--llm-context-size "${llm_context_size}")
 flags+=(--llm-max-tokens "${llm_max_tokens}")
 flags+=(--llm-system-prompt "${llm_system_prompt}")
@@ -85,7 +103,7 @@ flags+=(--zeroconf)
 
 bashio::log.info "Starting Lemonade-Wyoming bridge …"
 bashio::log.info "  STT model:  ${stt_model} (${stt_backend})"
-bashio::log.info "  LLM model:  ${llm_model} (${llm_backend})"
+bashio::log.info "  LLM model:  ${llm_model} (backend=${llm_backend_flag})"
 bashio::log.info "  TTS model:  ${tts_model}  voice=${tts_voice}"
 bashio::log.info "  Lemonade:   http://${lemonade_host}:${lemonade_port}"
 
