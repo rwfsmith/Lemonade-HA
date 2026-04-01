@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.7
+
+- Fix: remove invalid `quality_scale: "custom"` from manifest (not a valid HA enum value,
+  caused manifest validation failure so integration never appeared in the UI)
+- Fix: change `integration_type` from `"service"` to `"hub"` (correct type for a local integration)
+- Fix: run script now calls `ha core restart` automatically after installing the component,
+  eliminating the timing race where HA finishes scanning before the add-on finishes copying
+
 ## 0.3.6
 
 - Fix: add `custom_components/lemonade_ha/translations/en.json` so HA can
