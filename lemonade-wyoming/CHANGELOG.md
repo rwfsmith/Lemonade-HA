@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Fix HEALTHCHECK start-period from 10 minutes to 30 seconds so HA Supervisor
+  sees the container as healthy within its 120-second startup window
+
 ## 0.3.0
 
 - Fix startup timeout: Wyoming TCP ports now open immediately; Lemonade

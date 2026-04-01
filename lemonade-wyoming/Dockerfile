@@ -34,8 +34,9 @@ RUN pip3 install --no-cache-dir \
 WORKDIR /
 COPY rootfs /
 
-# Health-check: send a Wyoming "describe" event to the STT port
-HEALTHCHECK --start-period=10m \
+# Health-check: ports open immediately; use a short start-period so HA
+# Supervisor sees the container as healthy well within its 120-second window.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
     CMD echo '{ "type": "describe" }' \
         | nc -w 1 localhost 10500 \
         | grep -q "lemonade" \
