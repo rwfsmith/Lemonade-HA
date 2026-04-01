@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Fix HEALTHCHECK: use `nc -z` (port-open check) instead of Wyoming protocol
+  framing that was always failing and causing the watchdog restart loop
+
 ## 0.3.1
 
 - Fix HEALTHCHECK start-period from 10 minutes to 30 seconds so HA Supervisor

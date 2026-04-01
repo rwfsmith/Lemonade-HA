@@ -34,10 +34,6 @@ RUN pip3 install --no-cache-dir \
 WORKDIR /
 COPY rootfs /
 
-# Health-check: ports open immediately; use a short start-period so HA
-# Supervisor sees the container as healthy well within its 120-second window.
+# Health-check: just verify the STT port is listening.
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
-    CMD echo '{ "type": "describe" }' \
-        | nc -w 1 localhost 10500 \
-        | grep -q "lemonade" \
-        || exit 1
+    CMD nc -z localhost 10500 || exit 1
