@@ -33,7 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _ATTRIBUTION = Attribution(
     name="Lemonade",
-    url="https://github.com/rwfsmith/Lemonade-Wyoming",
+    url="https://github.com/rwfsmith/Lemonade-HA",
 )
 
 

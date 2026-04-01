@@ -5,7 +5,7 @@ name: Lemonade Wyoming
 description: >-
   Local Voice Assist powered by Lemonade — Whisper STT, LLM conversation,
   and Kokoro TTS via the Wyoming protocol.
-url: https://github.com/rwfsmith/Lemonade-Wyoming
+url: https://github.com/rwfsmith/Lemonade-HA
 arch:
   - amd64
 init: false
