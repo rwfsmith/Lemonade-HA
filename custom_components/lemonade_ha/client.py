@@ -106,6 +106,7 @@ class LemonadeClient:
         }
         if "qwen3" in model.lower():
             body["enable_thinking"] = False
+            body["chat_template_kwargs"] = {"enable_thinking": False}
         _LOGGER.debug("LLM request → %s", json.dumps(body, ensure_ascii=False))
         session = self._get_session()
         chunks: list[str] = []
