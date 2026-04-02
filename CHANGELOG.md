@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.13
+
+- Fix: completely rewrite `config_flow.py` which was corrupted by a prior
+  string-replacement operation, causing duplicate class definitions and loose
+  code outside classes. The corrupted file prevented the module from importing,
+  producing the "Invalid handler specified" error when clicking the integration.
+
 ## 0.3.12
 
 - Fix: replace `ConfigFlowResult` (added HA 2024.4) with `FlowResult` from
