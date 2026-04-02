@@ -65,6 +65,10 @@ class LemonadeClient:
             data.add_field("language", language)
         if backend and backend != "auto":
             data.add_field("backend", backend)
+        _LOGGER.debug(
+            "STT request → model=%s language=%s backend=%s audio_bytes=%d",
+            model, language, backend, len(wav_bytes),
+        )
         session = self._get_session()
         async with session.post(EP_TRANSCRIPTIONS, data=data, timeout=_READ_TIMEOUT) as resp:
             resp.raise_for_status()
@@ -102,6 +106,7 @@ class LemonadeClient:
         }
         if "qwen3" in model.lower():
             body["enable_thinking"] = False
+        _LOGGER.debug("LLM request → %s", json.dumps(body, ensure_ascii=False))
         session = self._get_session()
         chunks: list[str] = []
         async with session.post(EP_CHAT_COMPLETIONS, json=body, timeout=_READ_TIMEOUT) as resp:
@@ -136,6 +141,7 @@ class LemonadeClient:
             "response_format": "pcm",
         }
         session = self._get_session()
+        _LOGGER.debug("TTS request → model=%s voice=%s text_len=%d", model, voice, len(text))
         async with session.post(EP_SPEECH, json=body, timeout=_READ_TIMEOUT) as resp:
             resp.raise_for_status()
             return await resp.read()
