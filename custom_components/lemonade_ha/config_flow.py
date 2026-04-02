@@ -29,6 +29,7 @@ from .const import (
     DEFAULT_TTS_VOICE,
     DOMAIN,
 )
+from .tts import SUPPORTED_VOICES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,23 +62,32 @@ def _llm_schema(defaults: dict, models: list[str] | None = None) -> vol.Schema:
 
 
 def _tts_schema(defaults: dict) -> vol.Schema:
+    # Voice dropdown: {voice_id: "Friendly Name"} dict renders as a labelled selector
+    voice_options = {voice_id: name for voice_id, name in SUPPORTED_VOICES}
+    default_voice = defaults.get(CONF_TTS_VOICE, DEFAULT_TTS_VOICE)
+    if default_voice not in voice_options:
+        voice_options[default_voice] = default_voice
     return vol.Schema({
         vol.Required(CONF_TTS_MODEL, default=defaults.get(CONF_TTS_MODEL, DEFAULT_TTS_MODEL)): str,
-        vol.Required(CONF_TTS_VOICE, default=defaults.get(CONF_TTS_VOICE, DEFAULT_TTS_VOICE)): str,
+        vol.Required(CONF_TTS_VOICE, default=default_voice): vol.In(voice_options),
     })
 
 
-async def _fetch_models(hass, entry_id: str) -> list[str]:
-    """Fetch available model IDs from the Lemonade server."""
+async def _fetch_models(hass, entry_id: str, kind: str = "llm") -> list[str]:
+    """Fetch model IDs from Lemonade, filtered by kind ('stt' or 'llm')."""
     from .client import LemonadeClient
     entry = hass.config_entries.async_get_known_entry(entry_id)
     client = LemonadeClient(entry.data[CONF_HOST], entry.data[CONF_PORT])
     try:
-        return await client.get_models()
+        all_models = await client.get_models()
     except Exception:
         return []
     finally:
         await client.close()
+    if kind == "stt":
+        return [m for m in all_models if "whisper" in m.lower()]
+    # llm: exclude whisper and kokoro/tts models
+    return [m for m in all_models if "whisper" not in m.lower() and "kokoro" not in m.lower()]
 
 
 # ── Subentry flows ─────────────────────────────────────────────────────────────
@@ -88,7 +98,7 @@ class SttSubentryFlow(ConfigSubentryFlow):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> dict:
         if user_input is not None:
             return self.async_create_entry(title="Lemonade STT", data=user_input)
-        models = await _fetch_models(self.hass, self._entry_id)
+        models = await _fetch_models(self.hass, self._entry_id, kind="stt")
         return self.async_show_form(step_id="user", data_schema=_stt_schema({}, models))
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> dict:
@@ -97,7 +107,7 @@ class SttSubentryFlow(ConfigSubentryFlow):
             return self.async_update_and_abort(
                 self._get_entry(), current, data=user_input, title="Lemonade STT"
             )
-        models = await _fetch_models(self.hass, self._entry_id)
+        models = await _fetch_models(self.hass, self._entry_id, kind="stt")
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=_stt_schema(current.data, models),
@@ -110,7 +120,7 @@ class LlmSubentryFlow(ConfigSubentryFlow):
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> dict:
         if user_input is not None:
             return self.async_create_entry(title="Lemonade", data=user_input)
-        models = await _fetch_models(self.hass, self._entry_id)
+        models = await _fetch_models(self.hass, self._entry_id, kind="llm")
         return self.async_show_form(step_id="user", data_schema=_llm_schema({}, models))
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> dict:
@@ -119,7 +129,7 @@ class LlmSubentryFlow(ConfigSubentryFlow):
             return self.async_update_and_abort(
                 self._get_entry(), current, data=user_input, title="Lemonade"
             )
-        models = await _fetch_models(self.hass, self._entry_id)
+        models = await _fetch_models(self.hass, self._entry_id, kind="llm")
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=_llm_schema(current.data, models),

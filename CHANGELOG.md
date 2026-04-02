@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- STT model dropdown now filters to Whisper models only.
+- LLM model dropdown now excludes Whisper and Kokoro models.
+- TTS voice is now a labelled dropdown (same voice list as the entity).
+
 ## 0.4.3
 
 - Model dropdowns for STT and LLM subentry flows (fetched live from Lemonade
