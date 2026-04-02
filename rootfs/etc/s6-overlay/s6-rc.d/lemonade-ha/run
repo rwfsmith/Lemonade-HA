@@ -3,16 +3,29 @@
 # ==============================================================================
 # Lemonade HA add-on
 # Installs the custom integration into HA config dir, then sleeps.
-# All model/connection configuration is done through the HA integration UI.
 # ==============================================================================
 
 # ── Find HA config directory ──────────────────────────────────────────────────
-# Current HA OS mounts it at /homeassistant; older installs use /config.
-if [ -d "/homeassistant" ]; then
+# Locate the real HA config dir by looking for configuration.yaml.
+# In current HA OS, homeassistant:rw mounts at /homeassistant.
+# In older supervisor or with config:rw, the HA config is at /config.
+bashio::log.info "Searching for HA config directory ..."
+bashio::log.info "  /homeassistant exists: $([ -d /homeassistant ] && echo yes || echo no)"
+bashio::log.info "  /homeassistant/configuration.yaml: $([ -f /homeassistant/configuration.yaml ] && echo yes || echo no)"
+bashio::log.info "  /config exists: $([ -d /config ] && echo yes || echo no)"
+bashio::log.info "  /config/configuration.yaml: $([ -f /config/configuration.yaml ] && echo yes || echo no)"
+
+if [ -f "/homeassistant/configuration.yaml" ]; then
     HA_CONFIG="/homeassistant"
-else
+elif [ -f "/config/configuration.yaml" ]; then
     HA_CONFIG="/config"
+else
+    bashio::log.error "Cannot find HA config dir (no configuration.yaml in /homeassistant or /config)!"
+    bashio::log.error "Add-on cannot install the custom integration. Check add-on map settings."
+    exec sleep infinity
 fi
+
+bashio::log.info "HA config directory: ${HA_CONFIG}"
 
 COMPONENT_SRC="/usr/src/custom_components/lemonade_ha"
 COMPONENT_DEST="${HA_CONFIG}/custom_components/lemonade_ha"

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.11
+
+- Fix: add `config:rw` to map alongside `homeassistant:rw` so the HA config dir
+  is accessible at both `/homeassistant` and `/config` regardless of supervisor version
+- Fix: run script now detects HA config dir by presence of `configuration.yaml`
+  (reliable) rather than just checking if the directory exists
+- Added diagnostic log lines showing which paths exist and whether they contain
+  `configuration.yaml`, so the next log will show exactly where files are landing
+
 ## 0.3.10
 
 - Fix: replace `httpx` with `aiohttp` (always bundled with HA) — no external pip requirements.
