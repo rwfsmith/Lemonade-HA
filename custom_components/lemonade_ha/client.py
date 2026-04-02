@@ -5,8 +5,11 @@ from __future__ import annotations
 import aiohttp
 import io
 import logging
+import re
 import wave
 from typing import Any
+
+_THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
 
 from .const import EP_CHAT_COMPLETIONS, EP_HEALTH, EP_SPEECH, EP_TRANSCRIPTIONS
 
@@ -65,12 +68,15 @@ class LemonadeClient:
             "max_tokens": max_tokens,
             "temperature": temperature,
             "stream": False,
+            "enable_thinking": False,  # suppress Qwen3 thinking mode; ignored by other models
         }
         session = self._get_session()
         async with session.post(EP_CHAT_COMPLETIONS, json=body, timeout=_READ_TIMEOUT) as resp:
             resp.raise_for_status()
             result = await resp.json()
-            return result["choices"][0]["message"]["content"]
+            content = result["choices"][0]["message"]["content"] or ""
+            # Strip any residual <think>…</think> blocks (safety net for thinking models)
+            return _THINK_RE.sub("", content).strip()
 
     async def synthesize_speech(
         self, text: str, model: str = "kokoro-v1", voice: str = "af_heart"

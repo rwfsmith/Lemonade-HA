@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.14
+
+- Fix: LLM returning empty responses with Qwen3 thinking models (e.g. Qwen3.5-35B-A3B-GGUF).
+  Qwen3 thinking mode fills the entire `max_tokens` budget with `<think>` tokens, leaving
+  no room for the actual response. Fix: pass `enable_thinking: false` in the request body
+  (Qwen3-specific extension, silently ignored by all other models) and strip any residual
+  `<think>…</think>` blocks from the content as a safety net.
+
 ## 0.3.13
 
 - Fix: completely rewrite `config_flow.py` which was corrupted by a prior
