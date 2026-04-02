@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import re
 from typing import Any
 
 from homeassistant.components.tts import TextToSpeechEntity, TtsAudioType, Voice
@@ -23,6 +25,37 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Split on sentence-ending punctuation followed by whitespace or end-of-string.
+# Keeps the punctuation attached to the preceding chunk.
+# Avoids splitting on common abbreviations (Mr. Dr. etc.) by requiring the
+# character before the punctuation to not be a single capital letter.
+_SENTENCE_RE = re.compile(r'(?<=[^A-Z][\.\!\?])\s+')
+
+
+def _split_sentences(text: str, min_len: int = 40) -> list[str]:
+    """Split text into sentence chunks for parallel TTS synthesis.
+
+    Chunks shorter than min_len are merged with the next one so Kokoro
+    doesn't produce choppy one-word clips.
+    """
+    raw = [s.strip() for s in _SENTENCE_RE.split(text) if s.strip()]
+    if not raw:
+        return [text]
+    merged: list[str] = []
+    buf = ""
+    for chunk in raw:
+        buf = (buf + " " + chunk).strip() if buf else chunk
+        if len(buf) >= min_len:
+            merged.append(buf)
+            buf = ""
+    if buf:
+        if merged:
+            merged[-1] += " " + buf  # attach trailing fragment to previous
+        else:
+            merged.append(buf)
+    return merged
+
 
 # (voice_id, friendly name)
 SUPPORTED_VOICES: list[tuple[str, str]] = [
@@ -104,17 +137,22 @@ class LemonadeTtsEntity(TextToSpeechEntity):
         model = data.get(CONF_TTS_MODEL, DEFAULT_TTS_MODEL)
         voice = (options or {}).get("voice") or data.get(CONF_TTS_VOICE, DEFAULT_TTS_VOICE)
 
+        sentences = _split_sentences(message)
+        _LOGGER.debug("TTS: synthesising %d chunk(s) in parallel", len(sentences))
+
         try:
-            pcm = await self._client.synthesize_speech(
-                text=message, model=model, voice=voice
-            )
+            pcm_chunks: list[bytes] = list(await asyncio.gather(
+                *[self._client.synthesize_speech(s, model=model, voice=voice)
+                  for s in sentences]
+            ))
         except Exception:
             _LOGGER.exception("Lemonade TTS synthesis failed")
             return None, None
 
+        combined_pcm = b"".join(pcm_chunks)
         # Wrap raw PCM in a WAV container so HA knows how to play it
         wav = self._client.pcm_to_wav(
-            pcm,
+            combined_pcm,
             sample_rate=KOKORO_SAMPLE_RATE,
             sample_width=KOKORO_SAMPLE_WIDTH,
             channels=KOKORO_CHANNELS,
