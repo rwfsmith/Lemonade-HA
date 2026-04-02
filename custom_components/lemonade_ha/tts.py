@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.tts import TextToSpeechEntity, TtsAudioType
+from homeassistant.components.tts import TextToSpeechEntity, TtsAudioType, Voice
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -23,11 +23,32 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORTED_VOICES = [
-    "af_heart", "af_sky", "af_bella", "af_nicole", "af_sarah",
-    "am_adam", "am_michael", "am_echo",
-    "bf_emma", "bm_george",
-    "alloy", "ash", "coral", "echo", "fable", "onyx", "nova", "shimmer",
+# (voice_id, friendly name)
+SUPPORTED_VOICES: list[tuple[str, str]] = [
+    # American Female
+    ("af_heart",   "Heart (American Female)"),
+    ("af_sky",     "Sky (American Female)"),
+    ("af_bella",   "Bella (American Female)"),
+    ("af_nicole",  "Nicole (American Female)"),
+    ("af_sarah",   "Sarah (American Female)"),
+    ("af_alloy",   "Alloy (American Female)"),
+    # American Male
+    ("am_adam",    "Adam (American Male)"),
+    ("am_michael", "Michael (American Male)"),
+    ("am_echo",    "Echo (American Male)"),
+    # British Female
+    ("bf_emma",    "Emma (British Female)"),
+    # British Male
+    ("bm_george",  "George (British Male)"),
+    # OpenAI-compatible aliases
+    ("alloy",      "Alloy"),
+    ("ash",        "Ash"),
+    ("coral",      "Coral"),
+    ("echo",       "Echo"),
+    ("fable",      "Fable"),
+    ("onyx",       "Onyx"),
+    ("nova",       "Nova"),
+    ("shimmer",    "Shimmer"),
 ]
 
 
@@ -60,8 +81,15 @@ class LemonadeTtsEntity(TextToSpeechEntity):
         return ["en"]
 
     @property
+    def supported_options(self) -> list[str]:
+        return ["voice"]
+
+    @property
     def default_options(self) -> dict:
         return {"voice": self._entry.data.get(CONF_TTS_VOICE, DEFAULT_TTS_VOICE)}
+
+    async def async_get_tts_voice_list(self) -> list[Voice]:
+        return [Voice(voice_id=vid, name=name) for vid, name in SUPPORTED_VOICES]
 
     async def async_get_tts_audio(
         self, message: str, language: str, options: dict | None = None

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.18
+
+- Fix: TTS voice dropdown now appears in the HA Voice Assistant UI. Added
+  `supported_options: ["voice"]` and `async_get_tts_voice_list()` so HA
+  knows to show the voice selector and what options to populate it with.
+  Added friendly display names for all voices.
+
 ## 0.3.17
 
 - Add `hacs.json` — integration can now be installed and updated directly via
