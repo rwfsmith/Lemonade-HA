@@ -74,13 +74,27 @@ class LemonadeClient:
         max_tokens: int = 256,
         temperature: float = 0.7,
     ) -> str:
+        # Qwen3 models default to thinking mode. The API-level enable_thinking
+        # flag is only honoured by vLLM/SGLang. For llama.cpp-based servers
+        # (like Lemonade) the reliable way to disable thinking is the soft-switch:
+        # append /no_think to the system message.
+        patched = list(messages)
+        if "qwen3" in model.lower():
+            for i, msg in enumerate(patched):
+                if msg["role"] == "system":
+                    if "/no_think" not in msg["content"] and "/think" not in msg["content"]:
+                        patched[i] = {**msg, "content": msg["content"] + " /no_think"}
+                    break
+            else:
+                # No system message present — insert one
+                patched = [{"role": "system", "content": "/no_think"}] + patched
+
         body: dict[str, Any] = {
             "model": model,
-            "messages": messages,
+            "messages": patched,
             "max_tokens": max_tokens,
             "temperature": temperature,
             "stream": True,
-            "enable_thinking": False,  # suppress Qwen3 thinking mode; ignored by other models
         }
         session = self._get_session()
         chunks: list[str] = []
@@ -102,7 +116,7 @@ class LemonadeClient:
                 except Exception:
                     continue
         content = "".join(chunks)
-        # Strip any residual <think>…</think> blocks (safety net for thinking models)
+        # Strip any residual <think>…</think> blocks (safety net)
         return _THINK_RE.sub("", content).strip()
 
     async def synthesize_speech(

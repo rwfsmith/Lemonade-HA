@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.6
+
+- Fix Qwen3 thinking mode not being disabled. `enable_thinking: false` is a
+  vLLM/SGLang-only API parameter that llama.cpp-based servers (including
+  Lemonade) ignore. Switched to the reliable soft-switch: `/no_think` is
+  appended to the system message whenever the model name contains "qwen3".
+  The `<think>…</think>` regex strip is kept as a safety net.
+
 ## 0.4.5
 
 - LLM chat completion now uses SSE streaming (`stream: true`). Tokens are
