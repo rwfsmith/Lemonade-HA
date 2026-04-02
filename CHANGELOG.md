@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.17
+
+- Add `hacs.json` — integration can now be installed and updated directly via
+  HACS without the add-on. Add the repo as a custom repository in HACS,
+  category **Integration**.
+- Update README with HACS installation instructions as the primary method.
+
 ## 0.3.16
 
 - Add `copy_integration` add-on option (default `true`). Set to `false` to

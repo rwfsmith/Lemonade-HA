@@ -22,30 +22,38 @@ Run **fully local** voice assistants in Home Assistant using [Lemonade](https://
 
 ## Installation
 
-### 1 — Add this repository to Home Assistant
+### Method A — HACS (recommended)
 
-**Settings → Add-ons → Add-on Store → ⋮ (menu) → Repositories**
+The integration can be installed and updated directly through HACS, with no add-on required.
 
-Add:
-```
-https://github.com/rwfsmith/Lemonade-HA
-```
+1. In HACS, click **⋮ → Custom repositories**, paste `https://github.com/rwfsmith/Lemonade-HA`, choose category **Integration**, and click **Add**.
+2. Search for **Lemonade HA** and click **Download**.
+3. **Restart Home Assistant** so HA loads the custom component.
+4. Proceed to [Add the integration](#add-the-integration) below.
 
-### 2 — Install and configure the add-on
+To update: HACS will notify you when a new version is available — click **Update** and restart HA.
 
-1. Find **Lemonade HA** in the store and click **Install**.
-2. Open the **Configuration** tab and choose your models and backends.
-3. **Start** the add-on. On first launch it will download the selected models
-   (this may take a few minutes depending on model size).
+---
 
-On startup the add-on automatically installs the **Lemonade HA** custom
-component into your HA config directory.
+### Method B — Add-on (auto-installs the integration)
 
-### 3 — Restart Home Assistant
+The add-on bundles the integration and copies it into your HA config directory on startup.
+Use this method if you prefer not to use HACS.
 
-**Settings → System → Restart** — required once so HA loads the custom component.
+1. **Settings → Add-ons → Add-on Store → ⋮ → Repositories**, add:
+   ```
+   https://github.com/rwfsmith/Lemonade-HA
+   ```
+2. Find **Lemonade HA**, click **Install**, then **Start**.
+3. **Restart Home Assistant** once so HA loads the custom component.
 
-### 4 — Add the integration
+> **Tip:** If you later switch to HACS-managed updates, set `copy_integration: false` in the add-on
+> Configuration tab. The add-on will no longer overwrite the component on restart, so HACS controls
+> the integration version independently.
+
+---
+
+### Add the integration
 
 **Settings → Devices & Services → Add Integration → search "Lemonade HA"**
 
@@ -57,7 +65,7 @@ component into your HA config directory.
    - **Lemonade Kokoro** — Text-to-Speech engine
    - **Lemonade LLM** — Conversation agent
 
-### 5 — Create a Voice Assistant
+### Create a Voice Assistant
 
 **Settings → Voice Assistants → Add Assistant**
 
