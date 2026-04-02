@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.9
+
+- Fix: add `"dependencies": ["conversation"]` and `"after_dependencies": ["assist_pipeline", "intent"]`
+  to manifest — without declaring the conversation dependency, HA silently skips loading
+  the integration so it never appears in the UI
+- Restore `"integration_type": "service"` (correct value per working reference integrations)
+
 ## 0.3.8
 
 - Fix: lazy-import `LemonadeClient` (and `httpx`) inside `async_step_user` instead of at
