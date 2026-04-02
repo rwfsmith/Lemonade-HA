@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.16
+
+- Add `copy_integration` add-on option (default `true`). Set to `false` to
+  prevent the add-on from copying/overwriting the custom component on startup,
+  so you can update the integration independently (manually, HACS, etc.)
+  without rebuilding or reconfiguring the add-on.
+
 ## 0.3.15
 
 - Change: increase default `llm_max_tokens` from 256 to 1024.

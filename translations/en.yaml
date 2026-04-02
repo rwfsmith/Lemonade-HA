@@ -1,5 +1,13 @@
 ---
 configuration:
+  copy_integration:
+    name: Copy Integration on Start
+    description: >-
+      When enabled (default), the add-on copies the bundled lemonade_ha custom
+      component into your HA config directory on every start, keeping it in sync
+      with the add-on version. Disable this if you want to manage the integration
+      independently — for example, by editing files directly or installing via HACS
+      — so the add-on never overwrites your changes.
   debug_logging:
     name: Debug Logging
     description: >-

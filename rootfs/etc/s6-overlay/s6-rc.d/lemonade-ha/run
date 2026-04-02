@@ -32,15 +32,20 @@ COMPONENT_DEST="${HA_CONFIG}/custom_components/lemonade_ha"
 
 mkdir -p "${HA_CONFIG}/custom_components"
 
-if [ ! -d "${COMPONENT_DEST}" ] || ! diff -rq "${COMPONENT_SRC}" "${COMPONENT_DEST}" > /dev/null 2>&1; then
-    bashio::log.info "Installing/updating Lemonade HA custom integration ..."
-    rm -rf "${COMPONENT_DEST}"
-    cp -r "${COMPONENT_SRC}" "${COMPONENT_DEST}"
-    bashio::log.info "Custom integration installed to: ${COMPONENT_DEST}"
-    bashio::log.warning "*** Restart Home Assistant (not the add-on) to load the integration. ***"
-    bashio::log.warning "Then: Settings > Devices & Services > Add Integration > search 'Lemonade'."
+if bashio::config.true 'copy_integration'; then
+    if [ ! -d "${COMPONENT_DEST}" ] || ! diff -rq "${COMPONENT_SRC}" "${COMPONENT_DEST}" > /dev/null 2>&1; then
+        bashio::log.info "Installing/updating Lemonade HA custom integration ..."
+        rm -rf "${COMPONENT_DEST}"
+        cp -r "${COMPONENT_SRC}" "${COMPONENT_DEST}"
+        bashio::log.info "Custom integration installed to: ${COMPONENT_DEST}"
+        bashio::log.warning "*** Restart Home Assistant (not the add-on) to load the integration. ***"
+        bashio::log.warning "Then: Settings > Devices & Services > Add Integration > search 'Lemonade'."
+    else
+        bashio::log.info "Lemonade HA custom integration is already up to date at: ${COMPONENT_DEST}"
+    fi
 else
-    bashio::log.info "Lemonade HA custom integration is already up to date at: ${COMPONENT_DEST}"
+    bashio::log.info "copy_integration is disabled — skipping component copy."
+    bashio::log.info "Manage ${COMPONENT_DEST} manually (e.g. via HACS or direct file edit)."
 fi
 
 bashio::log.info "Add-on running. Integration is managed by Home Assistant."

@@ -1,5 +1,5 @@
 ---
-version: 0.3.15
+version: 0.3.16
 slug: lemonade-ha
 name: Lemonade HA
 description: >-
@@ -16,7 +16,9 @@ map:
   - config:rw
 
 options:
+  copy_integration: true
   debug_logging: false
 
 schema:
+  copy_integration: bool
   debug_logging: bool
