@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.15
+
+- Change: increase default `llm_max_tokens` from 256 to 1024.
+
 ## 0.3.14
 
 - Fix: LLM returning empty responses with Qwen3 thinking models (e.g. Qwen3.5-35B-A3B-GGUF).
