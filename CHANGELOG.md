@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+- Fix: "Add service" menu still missing. Root cause: HA uses the classmethod
+  `async_get_supported_subentry_types` (not a `SUBENTRY_FLOWS` class attribute).
+  Replaced the attribute with the correct classmethod override.
+
 ## 0.4.1
 
 - Fix: "Add service" options not appearing in hub ⋮ menu. `SUBENTRY_TYPES`

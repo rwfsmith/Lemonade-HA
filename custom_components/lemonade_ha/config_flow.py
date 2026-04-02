@@ -5,7 +5,8 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigSubentryFlow
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigSubentryFlow
+from homeassistant.core import callback
 
 from .const import (
     CONF_HOST,
@@ -137,11 +138,17 @@ class LemonadeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    SUBENTRY_FLOWS = {
-        "stt": SttSubentryFlow,
-        "llm": LlmSubentryFlow,
-        "tts": TtsSubentryFlow,
-    }
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        """Return supported subentry types."""
+        return {
+            "stt": SttSubentryFlow,
+            "llm": LlmSubentryFlow,
+            "tts": TtsSubentryFlow,
+        }
 
     def __init__(self) -> None:
         self._host: str = DEFAULT_HOST
