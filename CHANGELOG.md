@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.5
+
+- LLM chat completion now uses SSE streaming (`stream: true`). Tokens are
+  collected as they arrive, eliminating timeout risk on slow/large models.
+  STT and TTS were already single-shot and need no change.
+
 ## 0.4.4
 
 - STT model dropdown now filters to Whisper models only.

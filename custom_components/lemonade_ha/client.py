@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import aiohttp
 import io
+import json
 import logging
 import re
 import wave
@@ -78,16 +79,31 @@ class LemonadeClient:
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
-            "stream": False,
+            "stream": True,
             "enable_thinking": False,  # suppress Qwen3 thinking mode; ignored by other models
         }
         session = self._get_session()
+        chunks: list[str] = []
         async with session.post(EP_CHAT_COMPLETIONS, json=body, timeout=_READ_TIMEOUT) as resp:
             resp.raise_for_status()
-            result = await resp.json()
-            content = result["choices"][0]["message"]["content"] or ""
-            # Strip any residual <think>…</think> blocks (safety net for thinking models)
-            return _THINK_RE.sub("", content).strip()
+            async for raw_line in resp.content:
+                line = raw_line.decode("utf-8", errors="replace").strip()
+                if not line or not line.startswith("data:"):
+                    continue
+                payload = line[5:].strip()
+                if payload == "[DONE]":
+                    break
+                try:
+                    data = json.loads(payload)
+                    delta = data["choices"][0].get("delta", {})
+                    token = delta.get("content") or ""
+                    if token:
+                        chunks.append(token)
+                except Exception:
+                    continue
+        content = "".join(chunks)
+        # Strip any residual <think>…</think> blocks (safety net for thinking models)
+        return _THINK_RE.sub("", content).strip()
 
     async def synthesize_speech(
         self, text: str, model: str = "kokoro-v1", voice: str = "af_heart"
