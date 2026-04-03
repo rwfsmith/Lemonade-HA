@@ -77,24 +77,26 @@ class LemonadeClient:
 
     async def chat_completion(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict],
         model: str,
         max_tokens: int = 256,
         temperature: float = 0.7,
-    ) -> str:
-        # Qwen3 models default to thinking mode. The API-level enable_thinking
-        # flag is only honoured by vLLM/SGLang. For llama.cpp-based servers
-        # (like Lemonade) the reliable way to disable thinking is the soft-switch:
-        # append /no_think to the system message.
+        tools: list[dict] | None = None,
+    ) -> tuple[str, list[dict]]:
+        """Send a chat completion request.
+
+        Returns (text_content, tool_calls). On a plain text response tool_calls
+        is empty; on a tool-call response text_content may be empty.
+        """
+        # Qwen3 models default to thinking mode — use /no_think soft-switch.
         patched = list(messages)
         if "qwen3" in model.lower():
             for i, msg in enumerate(patched):
-                if msg["role"] == "system":
+                if msg.get("role") == "system" and msg.get("content"):
                     if "/no_think" not in msg["content"] and "/think" not in msg["content"]:
                         patched[i] = {**msg, "content": msg["content"] + " /no_think"}
                     break
             else:
-                # No system message present — insert one
                 patched = [{"role": "system", "content": "/no_think"}] + patched
 
         body: dict[str, Any] = {
@@ -107,9 +109,12 @@ class LemonadeClient:
         if "qwen3" in model.lower():
             body["enable_thinking"] = False
             body["chat_template_kwargs"] = {"enable_thinking": False}
+        if tools:
+            body["tools"] = tools
         _LOGGER.debug("LLM request → %s", json.dumps(body, ensure_ascii=False))
         session = self._get_session()
         chunks: list[str] = []
+        tc_parts: dict[int, dict] = {}  # tool_call index → accumulated fragment
         async with session.post(EP_CHAT_COMPLETIONS, json=body, timeout=_READ_TIMEOUT) as resp:
             resp.raise_for_status()
             async for raw_line in resp.content:
@@ -120,16 +125,34 @@ class LemonadeClient:
                 if payload == "[DONE]":
                     break
                 try:
-                    data = json.loads(payload)
-                    delta = data["choices"][0].get("delta", {})
+                    event = json.loads(payload)
+                    delta = event["choices"][0].get("delta", {})
+                    # Plain text token
                     token = delta.get("content") or ""
                     if token:
                         chunks.append(token)
+                    # Tool-call deltas (accumulated by index)
+                    for tc_delta in delta.get("tool_calls", []):
+                        idx = tc_delta.get("index", 0)
+                        if idx not in tc_parts:
+                            tc_parts[idx] = {
+                                "id": "",
+                                "type": "function",
+                                "function": {"name": "", "arguments": ""},
+                            }
+                        part = tc_parts[idx]
+                        if tc_delta.get("id"):
+                            part["id"] = tc_delta["id"]
+                        fn = tc_delta.get("function", {})
+                        if fn.get("name"):
+                            part["function"]["name"] = fn["name"]
+                        if fn.get("arguments"):
+                            part["function"]["arguments"] += fn["arguments"]
                 except Exception:
                     continue
-        content = "".join(chunks)
-        # Strip any residual <think>…</think> blocks (safety net)
-        return _THINK_RE.sub("", content).strip()
+        content = _THINK_RE.sub("", "".join(chunks)).strip()
+        tool_calls = [tc_parts[i] for i in sorted(tc_parts)]
+        return content, tool_calls
 
     async def synthesize_speech(
         self, text: str, model: str = "kokoro-v1", voice: str = "af_heart"
