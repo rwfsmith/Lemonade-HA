@@ -58,14 +58,19 @@ async def _get_llm_tools(
     Falls back to ([], system_prompt) on any error so conversation still works.
     """
     try:
-        llm_context = llm.LLMContext(
-            platform=DOMAIN,
-            context=user_input.context,
-            user_prompt=user_input.text,
-            language=user_input.language,
-            assistant=ha_conversation.HOME_ASSISTANT_AGENT,
-            device_id=user_input.device_id,
-        )
+        # LLMContext signature varies across HA versions — build kwargs defensively.
+        import inspect
+        llm_ctx_params = set(inspect.signature(llm.LLMContext.__init__).parameters)
+        ctx_kwargs: dict[str, Any] = {"platform": DOMAIN, "context": user_input.context}
+        if "language" in llm_ctx_params:
+            ctx_kwargs["language"] = user_input.language
+        if "user_prompt" in llm_ctx_params:
+            ctx_kwargs["user_prompt"] = user_input.text
+        if "assistant" in llm_ctx_params:
+            ctx_kwargs["assistant"] = ha_conversation.HOME_ASSISTANT_AGENT
+        if "device_id" in llm_ctx_params:
+            ctx_kwargs["device_id"] = user_input.device_id
+        llm_context = llm.LLMContext(**ctx_kwargs)
         llm_api = await llm.async_get_api(hass, "assist", llm_context)
         tools = [_tool_to_openai(t) for t in llm_api.tools]
         full_system = f"{system_prompt}\n\n{llm_api.api_prompt}"
