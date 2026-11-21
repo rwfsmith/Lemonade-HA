@@ -12,6 +12,7 @@ from .const import (
     CONF_HOST,
     CONF_LLM_MAX_TOKENS,
     CONF_LLM_MODEL,
+    CONF_LLM_REASONING_EFFORT,
     CONF_LLM_SYSTEM_PROMPT,
     CONF_PORT,
     CONF_STT_BACKEND,
@@ -23,6 +24,7 @@ from .const import (
     DEFAULT_HOST,
     DEFAULT_LLM_MAX_TOKENS,
     DEFAULT_LLM_MODEL,
+    DEFAULT_LLM_REASONING_EFFORT,
     DEFAULT_PORT,
     DEFAULT_STT_BACKEND,
     DEFAULT_STT_LANGUAGE,
@@ -31,6 +33,7 @@ from .const import (
     DEFAULT_TTS_MODEL,
     DEFAULT_TTS_VOICE,
     DOMAIN,
+    LLM_REASONING_EFFORTS,
 )
 from .tts import SUPPORTED_VOICES
 
@@ -63,6 +66,8 @@ def _llm_schema(defaults: dict, models: list[str] | None = None) -> vol.Schema:
             _model_selector(models, defaults.get(CONF_LLM_MODEL, DEFAULT_LLM_MODEL)),
         vol.Optional(CONF_LLM_SYSTEM_PROMPT, default=defaults.get(CONF_LLM_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT)): str,
         vol.Optional(CONF_LLM_MAX_TOKENS, default=defaults.get(CONF_LLM_MAX_TOKENS, DEFAULT_LLM_MAX_TOKENS)): vol.Coerce(int),
+        vol.Optional(CONF_LLM_REASONING_EFFORT, default=defaults.get(CONF_LLM_REASONING_EFFORT, DEFAULT_LLM_REASONING_EFFORT)):
+            vol.In(LLM_REASONING_EFFORTS),
     })
 
 

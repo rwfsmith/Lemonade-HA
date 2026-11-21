@@ -1,5 +1,7 @@
 # Lemonade HA — Local Voice Assist for Home Assistant
 
+![Lemonade brand icon](icon.png)
+
 > **Transparency notice:** This integration was entirely vibe coded with GitHub Copilot. Use it accordingly.
 
 Run **fully local** voice assistants in Home Assistant using [Lemonade](https://github.com/lemonade-sdk/lemonade) as the AI backend.
@@ -76,6 +78,25 @@ Use this method if you prefer not to use HACS.
 | Conversation agent | Lemonade LLM |
 | Speech-to-text | Lemonade Whisper |
 | Text-to-speech | Lemonade Kokoro |
+
+### LLM reasoning effort
+
+When adding or editing an LLM conversation service under **Settings → Devices & Services
+→ Lemonade HA**, choose **Reasoning effort**: `minimal`, `low`, `medium`, `high`,
+`xhigh`, or `max`. New services default to `minimal`. The selection is sent as
+`reasoning_effort` on every chat completion, including tool-call follow-ups.
+Support and the effect of each level depend on the Lemonade backend and model;
+unsupported levels may be ignored or rejected by the server. Higher efforts may
+need a larger **Max response tokens** budget.
+
+Existing services keep their previous behavior until edited and saved. Selecting
+an effort stops the integration from forcing Qwen3's `/no_think` mode; explicit
+`/think` or `/no_think` instructions in your own system prompt are left untouched.
+
+The bundled integration brand icon requires **Home Assistant 2026.3 or newer**.
+The integration and add-on reuse the [Lemonade SDK icon](https://github.com/lemonade-sdk/lemonade/blob/f7077fcfb1b73752a2f380aaace614192a3a0e34/docs/assets/logo_512.png),
+Copyright 2026 Lemonade Community, under [Apache-2.0](custom_components/lemonade_ha/brand/LICENSE).
+The 256-pixel icons are resized copies of the upstream 512-pixel image.
 
 ---
 

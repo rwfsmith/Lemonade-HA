@@ -21,6 +21,7 @@ from .client import LemonadeClient
 from .const import (
     CONF_LLM_MAX_TOKENS,
     CONF_LLM_MODEL,
+    CONF_LLM_REASONING_EFFORT,
     CONF_LLM_SYSTEM_PROMPT,
     DEFAULT_LLM_MAX_TOKENS,
     DEFAULT_LLM_MODEL,
@@ -125,6 +126,7 @@ class LemonadeLlmEntity(ConversationEntity):
         model = data.get(CONF_LLM_MODEL, DEFAULT_LLM_MODEL)
         system_prompt = data.get(CONF_LLM_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT)
         max_tokens = int(data.get(CONF_LLM_MAX_TOKENS, DEFAULT_LLM_MAX_TOKENS))
+        reasoning_effort = data.get(CONF_LLM_REASONING_EFFORT)
 
         # ── Fetch HA Assist tools ───────────────────────────────────────────
         tools, full_system, llm_api = await _get_llm_tools(
@@ -151,6 +153,7 @@ class LemonadeLlmEntity(ConversationEntity):
                     model=model,
                     max_tokens=max_tokens,
                     tools=tools or None,
+                    reasoning_effort=reasoning_effort,
                 )
             except Exception:
                 _LOGGER.exception("Lemonade LLM chat completion failed")

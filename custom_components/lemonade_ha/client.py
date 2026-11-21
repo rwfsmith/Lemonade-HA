@@ -13,7 +13,10 @@ from typing import Any
 
 _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
 
-from .const import EP_CHAT_COMPLETIONS, EP_HEALTH, EP_MODELS, EP_SPEECH, EP_TRANSCRIPTIONS
+from .const import (
+    EP_CHAT_COMPLETIONS, EP_HEALTH, EP_MODELS, EP_SPEECH, EP_TRANSCRIPTIONS,
+    LLM_REASONING_EFFORTS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -83,15 +86,20 @@ class LemonadeClient:
         max_tokens: int = 256,
         temperature: float = 0.7,
         tools: list[dict] | None = None,
+        reasoning_effort: str | None = None,
     ) -> tuple[str, list[dict]]:
         """Send a chat completion request.
 
         Returns (text_content, tool_calls). On a plain text response tool_calls
         is empty; on a tool-call response text_content may be empty.
         """
-        # Qwen3 models default to thinking mode — use /no_think soft-switch.
+        if reasoning_effort is not None and reasoning_effort not in LLM_REASONING_EFFORTS:
+            raise ValueError(f"Unsupported reasoning effort: {reasoning_effort}")
+
+        # Preserve the legacy Qwen3 no-thinking default only when effort is unset.
+        disable_thinking = reasoning_effort is None and "qwen3" in model.lower()
         patched = list(messages)
-        if "qwen3" in model.lower():
+        if disable_thinking:
             for i, msg in enumerate(patched):
                 if msg.get("role") == "system" and msg.get("content"):
                     if "/no_think" not in msg["content"] and "/think" not in msg["content"]:
@@ -108,7 +116,9 @@ class LemonadeClient:
             "seed": random.randint(0, 2**31 - 1),
             "stream": True,
         }
-        if "qwen3" in model.lower():
+        if reasoning_effort is not None:
+            body["reasoning_effort"] = reasoning_effort
+        if disable_thinking:
             body["enable_thinking"] = False
             body["chat_template_kwargs"] = {"enable_thinking": False}
         if tools:
