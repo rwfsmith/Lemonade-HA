@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Bundle the Lemonade SDK brand icon for Home Assistant 2026.3+ and the add-on.
+- Add a per-LLM reasoning-effort selector: minimal, low, medium, high, xhigh,
+  and max. Pass the selected effort through all chat requests without forcing
+  Qwen3 thinking off; services without a saved effort retain legacy behavior.
+
 ## 0.4.6
 
 - Fix Qwen3 thinking mode not being disabled. `enable_thinking: false` is a
