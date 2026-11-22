@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.4
 
 - Bundle the Lemonade SDK brand icon for Home Assistant 2026.3+ and the add-on.
 - Add a per-LLM reasoning-effort selector: minimal, low, medium, high, xhigh,
