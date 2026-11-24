@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 import json
 import logging
 from typing import Any, Literal
+from uuid import uuid4
 
 from homeassistant.components import conversation as ha_conversation
 from homeassistant.components.conversation import (
@@ -19,6 +21,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .client import LemonadeClient
 from .const import (
+    CONF_LLM_CONTINUE_CONVERSATION,
     CONF_LLM_MAX_TOKENS,
     CONF_LLM_MODEL,
     CONF_LLM_REASONING_EFFORT,
@@ -32,6 +35,9 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 _MAX_TOOL_ITERATIONS = 10
+_MAX_HISTORIES = 128
+_MAX_HISTORY_TURNS = 10
+_STOP_PHRASES = {"end conversation", "stop listening"}
 
 
 def _tool_to_openai(tool: llm.Tool) -> dict:
@@ -106,7 +112,9 @@ class LemonadeLlmEntity(ConversationEntity):
         self._client = client
         self._attr_name = subentry.title
         self._attr_unique_id = f"{entry.entry_id}_llm_{subentry.subentry_id}"
-        self._histories: dict[str, list[dict]] = {}
+        self._histories: OrderedDict[tuple[str | None, str], list[list[dict]]] = (
+            OrderedDict()
+        )
 
     @property
     def supported_languages(self) -> list[str] | Literal["*"]:
@@ -127,6 +135,19 @@ class LemonadeLlmEntity(ConversationEntity):
         system_prompt = data.get(CONF_LLM_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT)
         max_tokens = int(data.get(CONF_LLM_MAX_TOKENS, DEFAULT_LLM_MAX_TOKENS))
         reasoning_effort = data.get(CONF_LLM_REASONING_EFFORT)
+        continue_enabled = data.get(CONF_LLM_CONTINUE_CONVERSATION, False)
+
+        conv_id = user_input.conversation_id or uuid4().hex
+        session_key = (user_input.context.user_id, conv_id)
+        if (
+            continue_enabled
+            and user_input.language.lower().split("-")[0] == "en"
+            and user_input.text.strip().rstrip(".!?").casefold() in _STOP_PHRASES
+        ):
+            self._histories.pop(session_key, None)
+            response = intent.IntentResponse(language=user_input.language)
+            response.async_set_speech("Okay, I'll stop listening.")
+            return ConversationResult(response=response, conversation_id=conv_id)
 
         # ── Fetch HA Assist tools ───────────────────────────────────────────
         tools, full_system, llm_api = await _get_llm_tools(
@@ -134,18 +155,16 @@ class LemonadeLlmEntity(ConversationEntity):
         )
 
         # ── Conversation history ────────────────────────────────────────────
-        conv_id = user_input.conversation_id or ""
-        if conv_id not in self._histories:
-            self._histories[conv_id] = [{"role": "system", "content": full_system}]
-        else:
-            # Refresh system message each turn so tool descriptions stay current
-            self._histories[conv_id][0] = {"role": "system", "content": full_system}
-
-        history = self._histories[conv_id]
+        past_turns = self._histories.get(session_key, [])
+        history = [{"role": "system", "content": full_system}]
+        for turn in past_turns:
+            history.extend(turn)
+        turn_start = len(history)
         history.append({"role": "user", "content": user_input.text})
 
         # ── Tool call loop ──────────────────────────────────────────────────
         response_text = "Sorry, I couldn't process that request."
+        completed = False
         for iteration in range(_MAX_TOOL_ITERATIONS):
             try:
                 content, tool_calls = await self._client.chat_completion(
@@ -160,9 +179,12 @@ class LemonadeLlmEntity(ConversationEntity):
                 break
 
             if not tool_calls:
-                # Plain text response — done
+                if not content.strip():
+                    _LOGGER.warning("Lemonade returned an empty conversation response")
+                    break
                 response_text = content
                 history.append({"role": "assistant", "content": response_text})
+                completed = True
                 break
 
             # Model wants to call tools
@@ -206,15 +228,21 @@ class LemonadeLlmEntity(ConversationEntity):
         else:
             _LOGGER.warning("Tool loop hit max iterations (%d)", _MAX_TOOL_ITERATIONS)
 
-        # Trim history: keep system message + last 20 entries
-        if len(history) > 22:
-            self._histories[conv_id] = [history[0]] + history[-20:]
+        if completed:
+            # Keep complete turns so pruning cannot split a tool call from its results.
+            self._histories[session_key] = [*past_turns, history[turn_start:]][
+                -_MAX_HISTORY_TURNS:
+            ]
+            self._histories.move_to_end(session_key)
+            if len(self._histories) > _MAX_HISTORIES:
+                self._histories.popitem(last=False)
 
         _LOGGER.info("LLM: %r → %r", user_input.text, response_text)
 
         intent_response = intent.IntentResponse(language=user_input.language)
         intent_response.async_set_speech(response_text)
-        return ConversationResult(
-            response=intent_response,
-            conversation_id=conv_id or None,
-        )
+        result = ConversationResult(response=intent_response, conversation_id=conv_id)
+        # Home Assistant versions before 2025.4 do not expose this flag.
+        if continue_enabled and completed and hasattr(result, "continue_conversation"):
+            result.continue_conversation = True
+        return result

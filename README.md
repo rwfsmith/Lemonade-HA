@@ -79,6 +79,27 @@ Use this method if you prefer not to use HACS.
 | Speech-to-text | Lemonade Whisper |
 | Text-to-speech | Lemonade Kokoro |
 
+### Continue without the wake word
+
+In **Settings → Devices & Services → Lemonade HA**, edit the LLM conversation
+agent and turn on **Continue without the wake word**. It is off by default and
+requires Home Assistant 2025.4 or later and a client that supports Assist
+continuation. If **Prefer handling commands locally** is enabled in your voice
+assistant, turns handled entirely by Home Assistant do not use this setting.
+
+For a custom device using the [Assist pipeline WebSocket API](https://developers.home-assistant.io/docs/voice/pipelines/):
+
+1. Start the first run as usual, without a `conversation_id` for a new chat.
+2. Read `continue_conversation` and `conversation_id` from
+   `intent-end.data.intent_output`. If the flag is `true`, wait for the current
+   run and audio playback to finish, then start a new `assist_pipeline/run`
+   with `start_stage: "stt"`, `end_stage: "tts"`, and the returned
+   `conversation_id` as a top-level field. Reuse the same pipeline.
+3. Return to wake-word mode and discard the ID if the flag is false or absent,
+   the run fails, the user cancels, or nobody speaks within the client's
+   follow-up timeout. In English, **“stop listening”** or **“end conversation”**
+   also ends the exchange.
+
 ### LLM reasoning effort
 
 When adding or editing an LLM conversation service under **Settings → Devices & Services

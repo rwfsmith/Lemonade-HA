@@ -50,7 +50,11 @@
             "llm_model": "Model",
             "llm_system_prompt": "System prompt",
             "llm_max_tokens": "Max response tokens",
-            "llm_reasoning_effort": "Reasoning effort"
+            "llm_reasoning_effort": "Reasoning effort",
+            "llm_continue_conversation": "Continue without the wake word"
+          },
+          "data_description": {
+            "llm_continue_conversation": "Ask compatible Assist clients to listen again after each reply."
           }
         },
         "reconfigure": {
@@ -59,7 +63,11 @@
             "llm_model": "Model",
             "llm_system_prompt": "System prompt",
             "llm_max_tokens": "Max response tokens",
-            "llm_reasoning_effort": "Reasoning effort"
+            "llm_reasoning_effort": "Reasoning effort",
+            "llm_continue_conversation": "Continue without the wake word"
+          },
+          "data_description": {
+            "llm_continue_conversation": "Ask compatible Assist clients to listen again after each reply."
           }
         }
       }
