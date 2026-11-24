@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.6
+
+- Instruct all LLM conversation agents, including those with saved custom
+  prompts, to reply in plain spoken text without Markdown or emoji.
+- Remove visual Markdown formatting and emoji from conversation replies before
+  passing them to Home Assistant speech output and storing follow-up history.
+  This protects any TTS engine selected in the Assist pipeline.
+
 ## 0.5.5
 
 - Add an opt-in **Continue without the wake word** setting per Lemonade LLM

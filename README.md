@@ -100,6 +100,14 @@ For a custom device using the [Assist pipeline WebSocket API](https://developers
    follow-up timeout. In English, **“stop listening”** or **“end conversation”**
    also ends the exchange.
 
+### Spoken replies
+
+Lemonade instructs conversation models to use plain spoken text, including when
+you have saved a custom system prompt. Markdown emphasis, headings, list markers,
+link markup, and emoji are also removed from replies before Home Assistant sends
+them to your selected TTS engine. Follow-up history uses the cleaned replies.
+This does not change text sent directly to the TTS service outside conversation.
+
 ### LLM reasoning effort
 
 When adding or editing an LLM conversation service under **Settings → Devices & Services
