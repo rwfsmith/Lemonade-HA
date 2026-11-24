@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.5
+
+- Add an opt-in **Continue without the wake word** setting per Lemonade LLM
+  agent. Compatible Assist clients can listen again after a reply and reuse the
+  conversation ID to carry context across turns.
+- Keep new conversations separate instead of sharing history when a request
+  arrives without a conversation ID.
+
 ## 0.5.4
 
 - Bundle the Lemonade SDK brand icon for Home Assistant 2026.3+ and the add-on.

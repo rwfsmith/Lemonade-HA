@@ -10,6 +10,7 @@ from homeassistant.core import callback
 
 from .const import (
     CONF_HOST,
+    CONF_LLM_CONTINUE_CONVERSATION,
     CONF_LLM_MAX_TOKENS,
     CONF_LLM_MODEL,
     CONF_LLM_REASONING_EFFORT,
@@ -68,6 +69,10 @@ def _llm_schema(defaults: dict, models: list[str] | None = None) -> vol.Schema:
         vol.Optional(CONF_LLM_MAX_TOKENS, default=defaults.get(CONF_LLM_MAX_TOKENS, DEFAULT_LLM_MAX_TOKENS)): vol.Coerce(int),
         vol.Optional(CONF_LLM_REASONING_EFFORT, default=defaults.get(CONF_LLM_REASONING_EFFORT, DEFAULT_LLM_REASONING_EFFORT)):
             vol.In(LLM_REASONING_EFFORTS),
+        vol.Optional(
+            CONF_LLM_CONTINUE_CONVERSATION,
+            default=defaults.get(CONF_LLM_CONTINUE_CONVERSATION, False),
+        ): bool,
     })
 
 
