@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import OrderedDict
 import json
 import logging
+import re
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -38,6 +39,35 @@ _MAX_TOOL_ITERATIONS = 10
 _MAX_HISTORIES = 128
 _MAX_HISTORY_TURNS = 10
 _STOP_PHRASES = {"end conversation", "stop listening"}
+_VOICE_INSTRUCTIONS = (
+    "Your replies will be read aloud by a text-to-speech engine. "
+    "Use plain spoken text only, without Markdown formatting, asterisks for "
+    "emphasis, emoji, or decorative symbols. Express emphasis and humor in words."
+)
+_EMOJI_RE = re.compile(
+    r"[0-9#*]\ufe0f?\u20e3"
+    r"|[\U0001f000-\U0001faff\u2600-\u27bf"
+    r"\u231a-\u231b\u23e9-\u23f3\u23f8-\u23fa"
+    r"\u25aa-\u25ab\u25b6\u25c0\u25fb-\u25fe"
+    r"\u2934-\u2935\u2b05-\u2b07\u2b1b-\u2b1c\u2b50\u2b55]"
+    r"[\ufe0e\ufe0f\U0001f3fb-\U0001f3ff\U000e0020-\U000e007f]*"
+    r"(?:\u200d(?=[\U0001f000-\U0001faff\u2600-\u27bf]))?"
+    r"|[\u00a9\u00ae\u2122]\ufe0f"
+)
+
+
+def _speech_text(text: str) -> str:
+    """Remove visual formatting without discarding spoken words or Unicode text."""
+    text = re.sub(r"(?m)^\s*(`{3,}|~{3,})[^\n]*$", "", text)
+    text = re.sub(r"!\[([^\]]*)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"(?m)^\s{0,3}(?:#{1,6}\s+|>\s*|[-+*]\s+|\d+[.)]\s+)", "", text)
+    text = re.sub(
+        r"(?<!\w)(\*{1,3}|_{1,3}|~~|`{1,2})(?=\S)(.+?)(?<=\S)\1(?!\w)",
+        r"\2",
+        text,
+    )
+    return " ".join(_EMOJI_RE.sub("", text).split())
 
 
 def _tool_to_openai(tool: llm.Tool) -> dict:
@@ -153,6 +183,7 @@ class LemonadeLlmEntity(ConversationEntity):
         tools, full_system, llm_api = await _get_llm_tools(
             self.hass, user_input, system_prompt
         )
+        full_system = f"{full_system}\n\n{_VOICE_INSTRUCTIONS}"
 
         # ── Conversation history ────────────────────────────────────────────
         past_turns = self._histories.get(session_key, [])
@@ -179,10 +210,11 @@ class LemonadeLlmEntity(ConversationEntity):
                 break
 
             if not tool_calls:
-                if not content.strip():
-                    _LOGGER.warning("Lemonade returned an empty conversation response")
+                speech = _speech_text(content)
+                if not speech:
+                    _LOGGER.warning("Lemonade returned no speakable conversation response")
                     break
-                response_text = content
+                response_text = speech
                 history.append({"role": "assistant", "content": response_text})
                 completed = True
                 break
@@ -201,7 +233,10 @@ class LemonadeLlmEntity(ConversationEntity):
 
             if llm_api is None:
                 _LOGGER.warning("Tool calls requested but HA LLM API is unavailable")
-                response_text = content or "I need smart-home access to answer that."
+                response_text = (
+                    _speech_text(content)
+                    or "I need smart-home access to answer that."
+                )
                 break
 
             # Execute each tool and append results

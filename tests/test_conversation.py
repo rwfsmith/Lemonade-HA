@@ -1,4 +1,4 @@
-"""Conversation continuation regressions without a Home Assistant install."""
+"""Conversation regressions without a Home Assistant install."""
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -53,6 +53,41 @@ def load_conversation():
 
 
 conversation = load_conversation()
+
+
+class SpeechTextTests(unittest.TestCase):
+    def test_removes_emphasis_and_joke_emoji(self):
+        self.assertEqual(
+            conversation._speech_text(
+                "**Why?** Because it's *funny*! \U0001f602 "
+                "_Really_ __funny__ and ~~very~~ `clever`."
+            ),
+            "Why? Because it's funny! Really funny and very clever.",
+        )
+
+    def test_removes_lists_headings_links_and_code_fences(self):
+        self.assertEqual(
+            conversation._speech_text(
+                "# Options\n- **Kitchen**\n* Hall\n1. Bedroom\n"
+                "> Read [the guide](https://example.com).\n```text\nDone.\n```"
+            ),
+            "Options Kitchen Hall Bedroom Read the guide. Done.",
+        )
+
+    def test_removes_compound_emoji_but_preserves_numbers(self):
+        self.assertEqual(
+            conversation._speech_text(
+                "Hi \U0001f44b\U0001f3fd! "
+                "\U0001f468\u200d\U0001f469\u200d\U0001f467 "
+                "\U0001f1ec\U0001f1e7 \u2764\ufe0f 1\ufe0f\u20e3 "
+                "\u00a9\ufe0f 123 #4 *"
+            ),
+            "Hi ! 123 #4 *",
+        )
+
+    def test_preserves_non_english_text_and_meaningful_punctuation(self):
+        text = "Caf\u00e9: 21\u00b0C, \u00a35. \u4f60\u597d! 2 * 3 = 6; room_name, don't, #4."
+        self.assertEqual(conversation._speech_text(text), text)
 
 
 class ConversationTests(unittest.IsolatedAsyncioTestCase):
@@ -146,3 +181,49 @@ class ConversationTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(result.continue_conversation)
         self.assertIn("couldn't process", result.response.speech)
+
+    async def test_voice_instructions_apply_to_saved_custom_prompts(self):
+        self.settings[conversation.CONF_LLM_SYSTEM_PROMPT] = "Tell jokes."
+        with patch.object(
+            conversation, "_get_llm_tools",
+            return_value=([], "Tell jokes.\n\nAssist tool instructions.", None),
+        ) as get_tools:
+            await self.turn("Tell me a joke")
+        self.assertEqual(get_tools.call_args.args[2], "Tell jokes.")
+        system = self.messages[-1][0]["content"]
+        self.assertTrue(system.startswith("Tell jokes.\n\nAssist tool instructions."))
+        self.assertIn("plain spoken text only", system)
+        self.assertIn("emoji", system)
+
+    async def test_speech_and_follow_up_history_are_plain_text(self):
+        self.client.chat_completion.side_effect = None
+        self.client.chat_completion.return_value = ("**A joke!** \U0001f602", [])
+        first = await self.turn("Tell a joke")
+        self.assertEqual(first.response.speech, "A joke!")
+
+        self.client.chat_completion.side_effect = (
+            lambda **kwargs: self.messages.append(deepcopy(kwargs["messages"]))
+            or ("Another joke.", [])
+        )
+        await self.turn("Another", first.conversation_id)
+        self.assertEqual(self.messages[-1][-2]["content"], "A joke!")
+
+    async def test_emoji_only_reply_does_not_continue_or_enter_history(self):
+        self.settings[conversation.CONF_LLM_CONTINUE_CONVERSATION] = True
+        self.client.chat_completion.side_effect = None
+        self.client.chat_completion.return_value = ("**\U0001f602**", [])
+        with self.assertLogs(conversation.__name__, level="WARNING"):
+            result = await self.turn("Tell a joke")
+        self.assertFalse(result.continue_conversation)
+        self.assertIn("couldn't process", result.response.speech)
+        self.assertFalse(self.agent._histories)
+
+    async def test_tool_unavailable_reply_is_also_plain_text(self):
+        self.client.chat_completion.side_effect = None
+        self.client.chat_completion.return_value = (
+            "**No access.** \U0001f614",
+            [{"id": "call", "function": {"name": "test", "arguments": "{}"}}],
+        )
+        with self.assertLogs(conversation.__name__, level="WARNING"):
+            result = await self.turn("Turn on the light")
+        self.assertEqual(result.response.speech, "No access.")
